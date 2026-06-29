@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>فاحص النطاقات — توفر دومينات .com للمتاجر</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400..700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --ink:#14181C;
+    --ink-2:#1B2026;
+    --ink-3:#21262D;
+    --paper:#F6F1E7;
+    --paper-2:#EDE4D2;
+    --gold:#C9971E;
+    --gold-soft:#E3B856;
+    --stamp-green:#2F6B4F;
+    --stamp-green-bg:#E5EEE7;
+    --stamp-red:#9C3D34;
+    --stamp-red-bg:#F2E4E1;
+    --stamp-gray:#5B5650;
+    --stamp-gray-bg:#EAE6DE;
+    --muted:#9C9388;
+    --muted-2:#6E665B;
+    --line: rgba(201,151,30,0.28);
+    --radius: 18px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: radial-gradient(1200px 800px at 80% -10%, #1d232a 0%, var(--ink) 55%, var(--ink) 100%);
+    color: var(--paper);
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    min-height:100vh;
+    padding: 28px 16px 60px;
+  }
+  .mono{ font-family:'IBM Plex Mono', monospace; direction:ltr; unicode-bidi: isolate; }
+  .wrap{ max-width: 960px; margin: 0 auto; }
+
+  /* ---------- header ---------- */
+  header.app-head{ display:flex; align-items:center; gap:14px; margin-bottom: 28px; }
+  .seal{
+    width:46px; height:46px; flex:none; border-radius:50%;
+    border: 2px dashed var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    color: var(--gold-soft); font-family:'Reem Kufi', sans-serif; font-size: 19px;
+  }
+  .head-text h1{
+    font-family:'Reem Kufi', sans-serif; font-weight:700; font-size: 22px; margin:0 0 4px;
+    letter-spacing:.2px; color: var(--paper);
+  }
+  .head-text p{ margin:0; font-size:13.5px; color: var(--muted); }
+
+  /* ---------- search desk ---------- */
+  .desk{
+    background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+    color: var(--ink);
+    border-radius: var(--radius);
+    padding: 26px 24px 22px;
+    box-shadow: 0 30px 60px -30px rgba(0,0,0,.55), 0 0 0 1px rgba(0,0,0,.04);
+    position: relative;
+    overflow: hidden;
+  }
+  .desk::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image: radial-gradient(circle, rgba(0,0,0,.05) 1px, transparent 1px);
+    background-size: 14px 14px;
+    opacity:.5; pointer-events:none;
+  }
+  .desk-label{
+    font-size: 12.5px; color: var(--muted-2); margin-bottom:10px; display:flex; align-items:center; gap:6px;
+  }
+  .desk-label .dot{ width:6px; height:6px; border-radius:50%; background: var(--gold); }
+  .input-row{ display:flex; gap:10px; position:relative; z-index:1; flex-wrap: wrap; }
+  input#storeName{
+    flex: 1 1 240px;
+    font-family:'IBM Plex Sans Arabic', sans-serif;
+    font-size: 18px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1.5px solid rgba(20,24,28,.18);
+    background: #fff;
+    color: var(--ink);
+    outline: none;
+  }
+  input#storeName:focus{ border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,151,30,.22); }
+  button{ font-family:'IBM Plex Sans Arabic', sans-serif; cursor:pointer; }
+  .btn-primary{
+    background: var(--ink); color: var(--paper); border:none;
+    padding: 14px 22px; border-radius: 12px; font-size: 15.5px; font-weight:600;
+    display:flex; align-items:center; gap:8px; white-space:nowrap;
+    transition: transform .12s ease, background .2s ease;
+  }
+  .btn-primary:hover{ background:#000; }
+  .btn-primary:active{ transform: scale(.97); }
+  .btn-primary:disabled{ opacity:.55; cursor: not-allowed; }
+  .btn-primary:focus-visible, button:focus-visible, input:focus-visible{ outline: 2px solid var(--gold); outline-offset:2px; }
+
+  .preview-row{
+    margin-top:14px; font-size: 14.5px; color: var(--muted-2);
+    display:flex; align-items:center; gap:8px; min-height: 22px; position:relative; z-index:1;
+  }
+  .preview-row .domain-preview{ color: var(--ink); font-weight:600; }
+  .preview-row .domain-preview .ext{ color: var(--gold); }
+  .hint{ margin-top:12px; font-size:12.5px; color: var(--muted-2); position:relative; z-index:1; }
+  .warn-note{
+    margin-top:12px; font-size:13px; background:#fff3da; color:#7a5410; border:1px solid #e9c067;
+    padding:9px 12px; border-radius:10px; display:none; position:relative; z-index:1;
+  }
+
+  /* ---------- verdict ribbon ---------- */
+  .verdict{
+    margin-top: 26px; border-radius: 14px; padding: 18px 22px;
+    display:none; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    border: 1px solid var(--line);
+  }
+  .verdict.show{ display:flex; }
+  .verdict.v-good{ background: linear-gradient(90deg, rgba(47,107,79,.18), rgba(47,107,79,.06)); }
+  .verdict.v-mid{ background: linear-gradient(90deg, rgba(201,151,30,.22), rgba(201,151,30,.06)); }
+  .verdict.v-bad{ background: linear-gradient(90deg, rgba(156,61,52,.22), rgba(156,61,52,.06)); }
+  .verdict.v-unknown{ background: linear-gradient(90deg, rgba(120,120,120,.2), rgba(120,120,120,.06)); }
+  .verdict-title{ font-family:'Reem Kufi', sans-serif; font-size: 17px; margin-bottom:4px; }
+  .verdict-sub{ font-size: 13px; color: var(--muted); }
+  .verdict-counts{ display:flex; gap:14px; font-size: 13.5px; flex-wrap:wrap; }
+  .verdict-counts span{ display:flex; align-items:center; gap:6px; }
+  .cdot{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+  .cdot.av{ background: var(--stamp-green); } .cdot.tk{ background: var(--stamp-red); } .cdot.un{ background: var(--stamp-gray); }
+
+  /* ---------- results grid ---------- */
+  #resultsPanel{ margin-top: 18px; }
+  .grid{
+    display:grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 16px;
+  }
+  @media (max-width: 620px){ .grid{ grid-template-columns: 1fr; } }
+
+  .slip{
+    background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+    color: var(--ink); border-radius: 14px; padding: 16px 16px 14px;
+    position:relative; box-shadow: 0 16px 30px -18px rgba(0,0,0,.5);
+  }
+  .slip::before{
+    content:""; position:absolute; top:0; left:14px; right:14px; height:0;
+    border-top: 2px dashed rgba(20,24,28,.18);
+  }
+  .slip-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-top:6px; }
+  .slip-domain{ font-size: 16.5px; font-weight:600; word-break: break-all; }
+  .tag-pill{
+    font-size: 10.5px; padding: 3px 9px; border-radius: 999px; white-space:nowrap;
+    background: rgba(20,24,28,.07); color: var(--muted-2); font-family:'IBM Plex Sans Arabic',sans-serif;
+  }
+  .stamp{
+    margin-top:10px; display:inline-flex; align-items:center; gap:6px;
+    font-family:'Reem Kufi', sans-serif; font-size: 13px; padding: 5px 14px;
+    border: 2px solid currentColor; border-radius: 8px; transform: rotate(-3deg);
+    letter-spacing:.5px;
+  }
+  .stamp.available{ color: var(--stamp-green); background: var(--stamp-green-bg); }
+  .stamp.taken{ color: var(--stamp-red); background: var(--stamp-red-bg); }
+  .stamp.unknown{ color: var(--stamp-gray); background: var(--stamp-gray-bg); }
+  .stamp.pending{ color: var(--muted-2); background: rgba(20,24,28,.05); border-style:dashed; }
+
+  .slip-note{ margin-top:9px; font-size:12.5px; color: var(--muted-2); line-height:1.5; min-height: 16px; }
+  .slip-foot{ display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
+  .source-tag{ font-size:11px; color: var(--muted); }
+  .copy-one{
+    background:none; border:none; color: var(--muted-2); font-size:12px; padding:2px 6px;
+    border-radius:6px; display:flex; align-items:center; gap:4px;
+  }
+  .copy-one:hover{ background: rgba(20,24,28,.06); color: var(--ink); }
+
+  .spin{
+    width:13px; height:13px; border-radius:50%; border:2px solid rgba(20,24,28,.18);
+    border-top-color: var(--gold); display:inline-block; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  /* ---------- actions ---------- */
+  .actions{ display:flex; gap:10px; margin-top:20px; flex-wrap:wrap; }
+  .btn-ghost{
+    background: rgba(255,255,255,.06); color: var(--paper); border:1px solid rgba(255,255,255,.14);
+    padding: 11px 18px; border-radius: 10px; font-size: 14px; display:flex; align-items:center; gap:7px;
+    transition: background .2s ease;
+  }
+  .btn-ghost:hover{ background: rgba(255,255,255,.12); }
+  .btn-ghost.reset{ color: var(--muted); border-color: rgba(255,255,255,.08); }
+
+  /* ---------- footer / toast ---------- */
+  .disclaimer{ margin-top:26px; font-size:12.5px; color: var(--muted); line-height:1.7; border-top:1px solid rgba(255,255,255,.08); padding-top:16px; }
+  .toast{
+    position: fixed; bottom: 24px; right: 24px; background: var(--paper); color: var(--ink);
+    padding: 11px 18px; border-radius: 10px; font-size: 13.5px; box-shadow: 0 10px 30px rgba(0,0,0,.4);
+    opacity:0; transform: translateY(10px); transition: all .25s ease; pointer-events:none; z-index: 50;
+  }
+  .toast.show{ opacity:1; transform: translateY(0); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: .001ms !important; transition-duration: .001ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="app-head">
+    <div class="seal">.com</div>
+    <div class="head-text">
+      <h1>فاحص النطاقات</h1>
+      <p>أداة داخلية لفريق التصميم — اعرف بسرعة هل اسم المتجر له خيارات .com متاحة قبل ما يوصل للمبرمج</p>
+    </div>
+  </header>
+
+  <div class="desk">
+    <div class="desk-label"><span class="dot"></span> اكتب اسم المتجر بالحروف اللاتينية</div>
+    <div class="input-row">
+      <input id="storeName" type="text" placeholder="مثال: candy أو candy shop" autocomplete="off" />
+      <button class="btn-primary" id="checkBtn">
+        <span>فحص الآن</span>
+      </button>
+    </div>
+    <div class="preview-row" id="previewRow"></div>
+    <div class="warn-note" id="warnNote"></div>
+    <div class="hint">بنفحص تلقائياً: name.com — name-store.com — name-sa.com — name-ksa.com — name-store-sa.com (وللاسماء المكونة من مقطعين: name-name.com وما يشابهها)</div>
+  </div>
+
+  <div class="verdict" id="verdictBox">
+    <div>
+      <div class="verdict-title" id="verdictTitle">—</div>
+      <div class="verdict-sub" id="verdictSub">—</div>
+    </div>
+    <div class="verdict-counts" id="verdictCounts"></div>
+  </div>
+
+  <div id="resultsPanel">
+    <div class="grid" id="resultsGrid"></div>
+  </div>
+
+  <div class="actions" id="actionsBar" style="display:none;">
+    <button class="btn-ghost" id="copyBtn">📋 نسخ النتائج</button>
+    <button class="btn-ghost" id="txtBtn">⬇️ تحميل كملف Text</button>
+    <button class="btn-ghost" id="imgBtn">🖼️ تحميل كصورة</button>
+    <button class="btn-ghost reset" id="resetBtn">↻ فحص اسم جديد</button>
+  </div>
+
+  <div class="disclaimer">
+    <strong style="color:var(--paper)">ملاحظة:</strong>
+    النتائج المعلّمة بـ"تأكيد مباشر من سجل النطاقات" دقيقة لحظة الفحص. النتائج المعلّمة "تقديرية" أو "غير مؤكدة" تعتمد على بحث آلي وقد لا تكون دقيقة 100% — يفضل تأكيدها يدوياً عبر أي مزود نطاقات (مثل GoDaddy أو Namecheap) قبل اعتماد التصميم النهائي بشكل كامل.
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const storeNameInput = document.getElementById('storeName');
+const checkBtn = document.getElementById('checkBtn');
+const previewRow = document.getElementById('previewRow');
+const warnNote = document.getElementById('warnNote');
+const verdictBox = document.getElementById('verdictBox');
+const verdictTitle = document.getElementById('verdictTitle');
+const verdictSub = document.getElementById('verdictSub');
+const verdictCounts = document.getElementById('verdictCounts');
+const resultsGrid = document.getElementById('resultsGrid');
+const actionsBar = document.getElementById('actionsBar');
+const toast = document.getElementById('toast');
+
+let lastMerged = [];
+let lastRawName = '';
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=> toast.classList.remove('show'), 2200);
+}
+
+function normalizeWord(w){
+  return w.toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+function parseInputName(raw){
+  const trimmed = raw.trim();
+  const rawWords = trimmed.split(/[\s\-_]+/).filter(Boolean);
+  const words = rawWords.map(normalizeWord).filter(Boolean);
+  const hasNonLatin = /[^\x00-\x7F]/.test(trimmed);
+  return { words, hasNonLatin, trimmed };
+}
+
+function buildCandidates(words){
+  const list = [];
+  if(words.length <= 1){
+    const base = words[0];
+    list.push({ slug: base, tag:'أساسي' });
+    list.push({ slug: `${base}-store`, tag:'مقترح' });
+    list.push({ slug: `${base}-sa`, tag:'مقترح' });
+    list.push({ slug: `${base}-ksa`, tag:'مقترح' });
+    list.push({ slug: `${base}-store-sa`, tag:'مقترح' });
+  } else {
+    const base = words.join('-');
+    const joined = words.join('');
+    list.push({ slug: base, tag:'أساسي' });
+    list.push({ slug: `${base}-sa`, tag:'مقترح' });
+    list.push({ slug: `${base}-ksa`, tag:'مقترح' });
+    list.push({ slug: `${base}-store`, tag:'مقترح' });
+    list.push({ slug: `${base}-store-sa`, tag:'مقترح' });
+    list.push({ slug: joined, tag:'إضافي' });
+  }
+  const seen = new Set();
+  return list.filter(item=>{
+    if(!item.slug || seen.has(item.slug)) return false;
+    seen.add(item.slug);
+    return true;
+  }).map(item => ({ ...item, domain: `${item.slug}.com` }));
+}
+
+// live preview while typing
+storeNameInput.addEventListener('input', ()=>{
+  const { words, hasNonLatin } = parseInputName(storeNameInput.value);
+  warnNote.style.display = 'none';
+  if(words.length === 0){
+    previewRow.innerHTML = '';
+    if(hasNonLatin){
+      warnNote.style.display='block';
+      warnNote.textContent = 'الاسم اللي كتبته بحروف عربية — دومينات .com لازم تكون بحروف لاتينية، اكتب النسخة اللاتينية من الاسم (transliteration).';
+    }
+    return;
+  }
+  const base = words.join('-');
+  previewRow.innerHTML = `سيتم فحص: <span class="mono domain-preview">${base}<span class="ext">.com</span></span> وما يشابهه`;
+});
+
+storeNameInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') runCheck(); });
+checkBtn.addEventListener('click', runCheck);
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  storeNameInput.value=''; previewRow.innerHTML=''; warnNote.style.display='none';
+  verdictBox.classList.remove('show','v-good','v-mid','v-bad','v-unknown');
+  resultsGrid.innerHTML=''; actionsBar.style.display='none';
+  storeNameInput.focus();
+});
+
+async function checkViaRDAP(domain){
+  try{
+    const res = await fetch(`https://rdap.verisign.com/com/v1/domain/${domain}`, { method:'GET' });
+    if(res.status === 404) return { status:'available' };
+    if(res.status === 200) return { status:'taken' };
+    return { status:'error' };
+  }catch(e){
+    return { status:'error' };
+  }
+}
+
+async function checkViaAI(domains){
+  const prompt = `تحقق من خلال البحث في الإنترنت عن حالة تسجيل أسماء النطاقات التالية: هل كل نطاق متاح للتسجيل الآن أو محجوز (مسجل) من قبل أحد؟
+أرجع الإجابة فقط كمصفوفة JSON صالحة بدون أي نص أو شرح أو علامات Markdown، بهذا الشكل تحديداً:
+[{"domain":"example.com","status":"available","note":"سبب قصير"}]
+حيث status تكون واحدة من: available أو taken أو unknown.
+
+النطاقات:
+${domains.join('\n')}`;
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1200,
+      system: 'أنت أداة فحص آلية. أجب فقط بمصفوفة JSON صالحة ولا تكتب أي نص آخر قبلها أو بعدها.',
+      messages: [{ role:'user', content: prompt }],
+      tools: [{ type:'web_search_20250305', name:'web_search' }]
+    })
+  });
+  const data = await response.json();
+  const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n');
+  const match = textBlocks.match(/\[[\s\S]*\]/);
+  const jsonStr = match ? match[0] : textBlocks;
+  return JSON.parse(jsonStr);
+}
+
+function slipHTML(item){
+  const statusClass = item.status === 'pending' ? 'pending' : item.status;
+  const statusLabel = {
+    available:'متاح ✅', taken:'محجوز ❌', unknown:'غير مؤكد ⚠️', pending:'جارٍ الفحص'
+  }[item.status] || 'غير مؤكد ⚠️';
+  const sourceLabel = item.source === 'rdap' ? '✓ تأكيد مباشر من سجل النطاقات'
+    : item.source === 'ai' ? '🔍 نتيجة بحث تقديرية' : item.status === 'pending' ? '' : '⚠ يحتاج فحص يدوي';
+  return `
+    <div class="slip" data-domain="${item.domain}">
+      <div class="slip-top">
+        <div class="slip-domain mono">${item.domain}</div>
+        <div class="tag-pill">${item.tag}</div>
+      </div>
+      <div class="stamp ${statusClass}">
+        ${item.status === 'pending' ? '<span class="spin"></span>' : ''} ${statusLabel}
+      </div>
+      <div class="slip-note">${item.note || ''}</div>
+      <div class="slip-foot">
+        <span class="source-tag">${sourceLabel}</span>
+        <button class="copy-one" onclick="copySingle('${item.domain}')">نسخ</button>
+      </div>
+    </div>
+  `;
+}
+
+window.copySingle = function(domain){
+  navigator.clipboard.writeText(domain).then(()=> showToast(`تم نسخ ${domain}`)).catch(()=>{});
+};
+
+function renderGrid(items){
+  resultsGrid.innerHTML = items.map(slipHTML).join('');
+}
+
+function updateVerdict(items){
+  const total = items.length;
+  const av = items.filter(i=>i.status==='available').length;
+  const tk = items.filter(i=>i.status==='taken').length;
+  const un = total - av - tk;
+
+  verdictBox.classList.add('show');
+  verdictBox.classList.remove('v-good','v-mid','v-bad','v-unknown');
+
+  let title, sub, cls;
+  if(av >= 3){
+    cls='v-good'; title='🟢 الاسم متاح بسهولة';
+    sub = `عندك ${av} خيار جاهز للحجز — ابعتها للمبرمج بثقة`;
+  } else if(av >= 1){
+    cls='v-mid'; title='🟡 متاح، لكن الخيارات محدودة';
+    sub = `فيه ${av} خيار متاح فقط من أصل ${total} — يفضل التحرك بسرعة قبل ما يُحجز`;
+  } else if(un === total){
+    cls='v-unknown'; title='⚪ تعذّر التأكيد الآلي';
+    sub = 'كل النتائج تحتاج مراجعة يدوية — جرّب فحص الاسم مباشرة عند مزود النطاقات';
+  } else {
+    cls='v-bad'; title='🔴 الاسم مزدحم';
+    sub = 'كل الخيارات المتوقعة محجوزة — ننصح بتغيير الاسم أو تعديل صياغته قبل تصميم الهوية';
+  }
+  verdictBox.classList.add(cls);
+  verdictTitle.textContent = title;
+  verdictSub.textContent = sub;
+  verdictCounts.innerHTML = `
+    <span><i class="cdot av"></i> متاح: ${av}</span>
+    <span><i class="cdot tk"></i> محجوز: ${tk}</span>
+    <span><i class="cdot un"></i> غير مؤكد: ${un}</span>
+  `;
+}
+
+async function runCheck(){
+  const raw = storeNameInput.value;
+  const { words, hasNonLatin } = parseInputName(raw);
+
+  if(words.length === 0){
+    warnNote.style.display='block';
+    warnNote.textContent = hasNonLatin
+      ? 'اكتب الاسم بالحروف اللاتينية حتى نقدر نفحص الدومين (مثال: candy shop).'
+      : 'اكتب اسم المتجر أولاً.';
+    storeNameInput.focus();
+    return;
+  }
+  warnNote.style.display='none';
+  lastRawName = raw.trim();
+
+  const candidates = buildCandidates(words);
+  let working = candidates.map(c => ({ ...c, status:'pending', note:'', source:'' }));
+  renderGrid(working);
+  verdictBox.classList.remove('show');
+  actionsBar.style.display='none';
+
+  checkBtn.disabled = true;
+  checkBtn.querySelector('span').textContent = 'جارٍ الفحص...';
+
+  // 1) parallel RDAP attempts
+  const rdapResults = await Promise.all(candidates.map(c => checkViaRDAP(c.domain)));
+  const needsFallback = [];
+  working = candidates.map((c, i) => {
+    const r = rdapResults[i];
+    if(r.status === 'available'){
+      return { ...c, status:'available', note:'مفتوح للتسجيل الآن', source:'rdap' };
+    }
+    if(r.status === 'taken'){
+      return { ...c, status:'taken', note:'مسجل حالياً من طرف آخر', source:'rdap' };
+    }
+    needsFallback.push(c.domain);
+    return { ...c, status:'pending', note:'', source:'' };
+  });
+  renderGrid(working);
+
+  // 2) AI web-search fallback for whatever RDAP couldn't confirm
+  if(needsFallback.length > 0){
+    try{
+      const aiResults = await checkViaAI(needsFallback);
+      const aiMap = new Map(aiResults.map(r => [r.domain, r]));
+      working = working.map(item => {
+        if(item.status !== 'pending') return item;
+        const found = aiMap.get(item.domain);
+        if(found){
+          return { ...item, status: found.status || 'unknown', note: found.note || 'نتيجة تقديرية عبر البحث', source:'ai' };
+        }
+        return { ...item, status:'unknown', note:'تعذّر التأكد تلقائياً', source:'none' };
+      });
+    }catch(e){
+      working = working.map(item => item.status==='pending'
+        ? { ...item, status:'unknown', note:'تعذّر الفحص الآلي — راجعه يدوياً عند مزود النطاقات', source:'none' }
+        : item);
+    }
+  }
+
+  renderGrid(working);
+  updateVerdict(working);
+  lastMerged = working;
+  actionsBar.style.display='flex';
+
+  checkBtn.disabled = false;
+  checkBtn.querySelector('span').textContent = 'فحص الآن';
+}
+
+function buildExportText(){
+  const lines = [];
+  lines.push('تقرير فحص توفر النطاقات');
+  lines.push(`اسم المتجر: ${lastRawName}`);
+  lines.push(`تاريخ الفحص: ${new Date().toLocaleString('ar-EG')}`);
+  lines.push('-----------------------------------');
+  lastMerged.forEach(item => {
+    const statusLabel = item.status==='available' ? 'متاح' : item.status==='taken' ? 'محجوز' : 'غير مؤكد';
+    lines.push(`${item.domain}  —  ${statusLabel}${item.note ? ' ('+item.note+')' : ''}`);
+  });
+  lines.push('-----------------------------------');
+  const av = lastMerged.filter(i=>i.status==='available').length;
+  lines.push(`الخلاصة: ${av} خيار متاح من أصل ${lastMerged.length}.`);
+  lines.push('ملاحظة: يفضل تأكيد النتائج غير المؤكدة يدوياً قبل الحجز النهائي.');
+  return lines.join('\n');
+}
+
+document.getElementById('copyBtn').addEventListener('click', ()=>{
+  navigator.clipboard.writeText(buildExportText()).then(()=> showToast('تم نسخ التقرير كامل')).catch(()=> showToast('تعذر النسخ'));
+});
+
+document.getElementById('txtBtn').addEventListener('click', ()=>{
+  const text = buildExportText();
+  const blob = new Blob([text], { type:'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `domain-check-${lastRawName.replace(/\s+/g,'-') || 'report'}.txt`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('تم تحميل ملف Text');
+});
+
+document.getElementById('imgBtn').addEventListener('click', async ()=>{
+  showToast('جارٍ تجهيز الصورة...');
+  const captureArea = document.createElement('div');
+  captureArea.style.padding = '24px';
+  captureArea.style.background = '#14181C';
+  captureArea.style.width = '760px';
+  captureArea.style.position='fixed'; captureArea.style.top='-9999px'; captureArea.style.left='-9999px';
+  captureArea.innerHTML = `
+    <div style="font-family:'IBM Plex Sans Arabic',sans-serif; color:#F6F1E7; direction:rtl;">
+      <div style="font-family:'Reem Kufi',sans-serif; font-size:20px; margin-bottom:4px;">تقرير فحص النطاقات</div>
+      <div style="font-size:13px; color:#9C9388; margin-bottom:16px;">اسم المتجر: ${lastRawName} — ${new Date().toLocaleDateString('ar-EG')}</div>
+      <div style="display:grid; grid-template-columns: repeat(2,1fr); gap:12px;">
+        ${lastMerged.map(slipHTML).join('')}
+      </div>
+    </div>
+  `;
+  document.body.appendChild(captureArea);
+  try{
+    const canvas = await html2canvas(captureArea, { backgroundColor:'#14181C', scale:2 });
+    const link = document.createElement('a');
+    link.download = `domain-check-${lastRawName.replace(/\s+/g,'-') || 'report'}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('تم تحميل الصورة');
+  }catch(e){
+    showToast('تعذر إنشاء الصورة');
+  }finally{
+    document.body.removeChild(captureArea);
+  }
+});
+</script>
+</body>
+</html>
